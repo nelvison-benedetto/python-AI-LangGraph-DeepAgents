@@ -46,6 +46,43 @@ def compile_report(state:OverallState):
         "final_report": report
     }    
 
+def continue_to_research(state:OverallState):
+    return [
+        Send("research_subtopic", {"subtopic":s}) for s in state["subtopics"]
+    ]
+
+
+builder = StateGraph(OverallState)
+
+builder.add_node(generate_subtopics)
+builder.add_node(research_subtopic)
+builder.add_node(compile_report)
+
+builder.add_edge(START, "generate_subtopics")
+builder.add_conditional_edges("generate_subtopics", continue_to_research)
+builder.add_edge("research_subtopics", "compile_report")
+builder.add_edge("compile_report", END)
+
+graph = builder.compile()
+
+initial_state = {
+    "topic": "AI",
+    "subtopics": [],
+    "research_results":[],
+    "final_report": ""
+}
+
+final_state = graph.invoke(initial_state)
+print("Final State:")
+print(final_state)
+print(final_state['final_report'])
+
+
+
+
+
+
+
 
 
 
