@@ -27,8 +27,19 @@ llm = ChatOpenAI(
 llm_with_tools = llm.bind_tools({get_weather, calculate_tip})
 
 weather_prompts = "what's the weather in tokyo"
-tip_prompt = "calculate a 20%"
+tip_prompt = "calculate a 20% tip on a $50 bill"
 
+response = llm_with_tools.invoke(weather_prompts)
+tool_calls = response.tool_calls
+print(tool_calls)
+
+for tool_call in tool_calls:
+    if tool_call['name'] == "get_weather":
+        result = get_weather.invoke(tool_call['args'])
+    elif tool_call['name'] == "calculate_tip":
+        result = calculate_tip.invoke(tool_call['args'])
+
+print(result)
 
 
 
