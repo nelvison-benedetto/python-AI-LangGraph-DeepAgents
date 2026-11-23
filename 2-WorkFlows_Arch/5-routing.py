@@ -82,21 +82,91 @@ def handle_technical(state:SupportState)->SupportState:
 
 
 def handle_refund(state:SupportState)->SupportState:
-    print("technical hanlder: processing technical query")
+    print("technical hanlder: processing refund query...")
     prompt=f"""
     you are a technical support specialist. handle this customer query:
     {state['customer_query']}
     provide a helpful response that:
-    - offers specific troubleshooting steps
-    - references relevant documentation
-    - asks clarifying questions if needed
-    - provides workarounds if applicable
-    be clear and technical but accessible
+    - explains the refund policy clearly
+    - outlines the refund process and timeline
+    - asks for necessary information (order number, reason, ect)
+    - shows empathy and understanding
+    be empathetic and solution-focused
     """
     response = llm.invoke(prompt).content
-    print("technical handler: response generated")
+    print("refund handler: response generated")
     return {
         "response": response,
-        "tools_used": ["knowledge_base", "bug_tracker", "system_logs"]
+        "tools_used": ["order_database", "refund_processor"]
     }
+
+def handle_general(state:SupportState)->SupportState:
+    print("general handler: processing general inquiry...")
+    prompt=f"""
+    you are a general support specialist. handle this customer query:
+    {state['customer_query']}
+    provide a helpful response that:
+    - answers their question clearly 
+    - provides relevant links or resources
+    - offers additional help if needed
+    - suggests related feat they might find useful
+    be friendly and informative
+    """
+    response = llm.invoke(prompt).content
+    print("general handler: response generated\n")
+    return {
+        "response": response,
+        "tools_used": ["knowledge_base", "faq_database"]
+    }
+
+
+def route_query(state:SupportState)->Literal["billing","technical", "refund","general"]:
+    print(f"routing: directing to {state['query_category']} handler...\n")
+    return state['query_category']
+
+
+builder = StateGraph(SupportState)
+builder.add_node("classify_query", classify_query)
+builder.add_node("billing",handle_billing)
+builder.add_node("technical", handle_technical)
+builder.add_node("refund", handle_refund)
+builder.add_node("general", handle_general)
+
+builder.add_edge(START, "classify_query")
+builder.add_conditional_edges(
+    "classify_query",
+    route_query,
+    {
+        "billing": "billing",
+        "technical": "technical",
+        "refund": "refund",
+        "general": "general"
+    }
+)
+
+builder.add_edge("billing", END)
+builder.add_edge("technical", END)
+builder.add_edge("refund", END)
+builder.add_edge("general", END)
+
+graph = builder.compile()
+
+billing_prompt = "i was charged twice for my subscription this month. can u help me?"
+technical_prompt = "the app keeps crashing when i try to upload files larger than 10MB"
+refund_prompt = "i'd like to request a refund for my recent purchase. it doesn't meet my needs."
+general_prompt = "what feat are included in the pro plan"
+
+result = graph.invoke({
+    "customer_query": billing_prompt,
+    "query_category": "",
+    "response": "",
+    "tools_used": ""
+})
+
+print(f"="*10)
+print(f"final response ({result['query_category'].upper()})")
+print(result['response'])
+print(f"\n tools used: {','.join(result['tools_used'])}")
+
+
 
