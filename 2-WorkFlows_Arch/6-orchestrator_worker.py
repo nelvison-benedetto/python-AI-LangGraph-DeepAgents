@@ -177,7 +177,7 @@ def synthesize_report(state: OverallState) -> OverallState:
         "final_report": final_report
     }
 
-# Contional Edge function
+#Contional Edge function
 def create_research_workers(state: OverallState):
 
     print("🚏 DISPATCHER: Creating research workers dynamically...")
@@ -231,3 +231,6 @@ print("="*70)
 print(f"FINAL SYNTHESIZED RESULT")
 print("="*70)
 print(result["final_report"])
+
+
+
